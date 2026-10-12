@@ -1,0 +1,114 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:'K';font-weight:500;src:url(node_modules/@fontsource/noto-sans-kr/files/noto-sans-kr-korean-500-normal.woff2) format('woff2');}
+@font-face{font-family:'K';font-weight:700;src:url(node_modules/@fontsource/noto-sans-kr/files/noto-sans-kr-korean-700-normal.woff2) format('woff2');}
+@font-face{font-family:'L';font-weight:500;src:url(node_modules/@fontsource/noto-sans-kr/files/noto-sans-kr-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'L';font-weight:700;src:url(node_modules/@fontsource/noto-sans-kr/files/noto-sans-kr-latin-700-normal.woff2) format('woff2');}
+body{margin:0;background:#fff;font-family:L,K,sans-serif;color:#1d2733}
+.sheet{width:2400px;padding:40px 48px;box-sizing:border-box;background:#fff}
+h1{font-size:44px;margin:0 0 6px} .sub{font-size:22px;color:#4a5866;margin-bottom:22px}
+.legend{display:flex;gap:26px;flex-wrap:wrap;font-size:22px;margin:10px 0 24px;align-items:center}
+.sw{display:inline-block;width:30px;height:22px;border-radius:4px;vertical-align:-4px;margin-right:8px;border:2px solid rgba(0,0,0,.25)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.card{border:2px solid #d5dbe1;border-radius:14px;padding:16px 18px;background:#fafbfc}
+.card h2{font-size:28px;margin:0 0 4px;display:flex;align-items:center;gap:12px}
+.tag{font-size:20px;color:#fff;padding:3px 12px;border-radius:20px}
+.card p{font-size:20px;margin:4px 0 10px;color:#3a4856;line-height:1.45}
+svg{display:block;width:100%;height:auto}
+.note{font-size:20px;color:#4a5866;margin-top:16px;line-height:1.55}
+table{border-collapse:collapse;font-size:21px;width:100%;margin-top:18px}
+td,th{border:1px solid #cfd6dd;padding:9px 12px;text-align:left;vertical-align:top} th{background:#eef2f5}
+</style></head><body>
+<div class="sheet" id="s1"></div>
+<div class="sheet" id="s2"></div>
+<script>
+const F = {   // function colours
+  tank:['#9aa3ad','탱크 ① (외함·SF6 가스 용기)'],
+  spacer:['#f2b705','절연 스페이서 ② = 다른 기기와 연결되는 접속면'],
+  cond:['#e03131','통전부: 도체 ③ · 고정접촉자 ⑰ · 가동접촉자 ⑱ (전류가 흐르는 길)'],
+  ds:['#f76707','단로기 조작부: ⑬ 랙·피니언 · ⑭ 기어박스 · ⑮ 절연조작봉 · ⑯ 커플링 (⑳ 전동조작장치로 구동)'],
+  es:['#1c7ed6','접지개폐기: ④ 고정접촉자 · ⑤ 가동접촉자 · ⑥~⑫ 링크·접지단자 (⑲ 수동조작장치로 구동)'],
+};
+const T = { // drawing types
+  A:{c:'#c2255c', no:'1CS0600',  img:'g_sec1.png', w:1228,h:694, title:'L형 · 접지개폐기 1개 (아래쪽 접속부 측 접지)',
+     desc:'아래 스페이서(②)와 오른쪽 끝 스페이서(②)로 접속. 접지개폐기는 반대쪽 끝에 달려 있고 아래쪽(가동접촉자 측) 도체를 접지.',
+     r:[['tank',400,250,735,310],['spacer',540,520,250,120],['spacer',1060,280,95,265],['cond',480,355,600,100],['cond',630,450,90,80],['ds',615,160,110,205],['ds',505,425,195,30],['es',140,340,280,270],['es',400,385,100,40]]},
+  B:{c:'#0c8599', no:'3CS02971', img:'g_sec2.png', w:842,h:967, title:'직선(관통)형 · 접지개폐기 1개 (하부)',
+     desc:'양쪽 끝 스페이서(②)로 앞뒤 기기와 일직선 접속. 접지개폐기 조작부가 아래에 붙어 중앙 도체를 접지.',
+     r:[['tank',150,255,620,305],['spacer',140,255,125,305],['spacer',635,255,140,305],['cond',240,330,420,140],['ds',375,100,110,230],['ds',380,400,90,40],['es',290,545,255,340],['es',398,440,38,120]]},
+  C:{c:'#2b8a3e', no:'3CS03213', img:'g_sec3.png', w:1193,h:843, title:'L형 · 접지개폐기 2개 (양쪽 모두 접지)',
+     desc:'1CS0600과 같은 L형 구조에, 오른쪽 접속부 측에도 접지개폐기를 하나 더 달아 단로기 양쪽을 모두 접지할 수 있음.',
+     r:[['tank',450,440,675,260],['spacer',565,680,235,95],['spacer',1035,445,100,245],['cond',505,510,555,115],['cond',645,610,75,80],['ds',635,330,90,185],['ds',600,580,100,30],['es',195,500,265,245],['es',430,550,90,35],['es',840,195,175,255],['es',920,450,40,150]]},
+  D:{c:'#7048e8', no:'3CS04525', img:'g_sec4.png', w:912,h:868, title:'L형 · 한쪽 끝 막힘 · 접지개폐기 1개 (끝단 접속부 측)',
+     desc:'왼쪽 끝은 덮개로 막혀 있고, 아래 스페이서와 오른쪽 스페이서로 접속. 접지개폐기는 위쪽에서 오른쪽(끝단 접속부) 측 도체를 접지.',
+     r:[['tank',125,490,720,305],['spacer',255,760,250,105],['spacer',735,500,115,260],['cond',210,580,565,110],['cond',335,690,85,70],['ds',325,395,100,195],['ds',300,640,120,30],['es',535,250,200,250],['es',650,500,40,140]]},
+};
+const legendHTML = Object.values(F).map(([c,t])=>`<span><span class="sw" style="background:${c}"></span>${t}</span>`).join('');
+function drawing(k){
+  const d=T[k];
+  const rects=d.r.map(([f,x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${F[f][0]}" fill-opacity="${f==='tank'?0.22:0.42}" stroke="${F[f][0]}" stroke-width="3" style="mix-blend-mode:multiply"/>`).join('');
+  return `<div class="card"><h2><span class="tag" style="background:${d.c}">${k}</span>${d.no} <span style="font-weight:500;font-size:22px;color:#3a4856">${d.title}</span></h2>
+  <p>${d.desc}</p>
+  <svg viewBox="0 0 ${d.w} ${d.h}"><image href="${d.img}" width="${d.w}" height="${d.h}"/>${rects}</svg></div>`;
+}
+document.getElementById('s1').innerHTML = `<h1>① 단로기·접지개폐기 도면 4종: 기능별 색칠</h1>
+<div class="sub">각 도면의 부품을 같은 색 규칙으로 칠했습니다. 노란색 스페이서(②)가 이 유닛이 다른 기기와 연결되는 지점입니다.</div>
+<div class="legend">${legendHTML}</div>
+<div class="grid">${['A','B','C','D'].map(drawing).join('')}</div>`;
+
+// ---------- GIS layout
+const G = {
+  cb:['#868e96','차단기 (CB)'], bus:['#37b24d','주모선 (No.1 / No.2 MAIN BUS)'], bush:['#a0522d','부싱 (가공선 인출)'],
+  duct:['#adb5bd','연결 모선 덕트'], vt:['#e8590c','VT/피뢰기 (추정)'], other:['#ced4da','4종 도면 외 부품 (차단기 단말·CT 등 추정)'],
+};
+function lay(img,w,h,items,title,desc){
+  let s='';
+  for(const it of items){
+    if(it.t==='circ'){ s+=`<circle cx="${it.x}" cy="${it.y}" r="${it.r}" fill="${G[it.g][0]}" fill-opacity=".45" stroke="${G[it.g][0]}" stroke-width="4" style="mix-blend-mode:multiply"/>`; continue; }
+    const col = it.k ? T[it.k].c : G[it.g][0];
+    const op = it.k ? .45 : (it.g==='other'?.35:.3);
+    s+=`<rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" rx="8" fill="${col}" fill-opacity="${op}" stroke="${col}" stroke-width="${it.k?5:3}" ${it.g==='other'?'stroke-dasharray="10 6"':''} style="mix-blend-mode:multiply"/>`;
+    if(it.k){ const cx=it.x+it.w/2, cy=it.lb==='b'?it.y+it.h+34:it.y-30;
+      s+=`<g><circle cx="${cx}" cy="${cy}" r="25" fill="${col}" stroke="#fff" stroke-width="3"/><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="30" font-weight="700" fill="#fff">${it.k}</text></g>`; }
+  }
+  for(const tl of items.filter(i=>i.txt)) s+=`<text x="${tl.tx}" y="${tl.ty}" font-size="26" font-weight="700" fill="${tl.k?T[tl.k].c:'#333'}" paint-order="stroke" stroke="#fff" stroke-width="6">${tl.txt}</text>`;
+  return `<div class="card" style="margin-bottom:26px"><h2>${title}</h2><p>${desc}</p><svg viewBox="0 -60 ${w} ${h+90}"><image href="${img}" y="0" width="${w}" height="${h}"/>${s}</svg></div>`;
+}
+const C=[
+  {g:'bush',x:68,y:45,w:85,h:645,txt:'부싱',tx:160,ty:120},{g:'bush',x:1393,y:45,w:80,h:645,txt:'부싱',tx:1300,ty:120},
+  {g:'duct',x:150,y:335,w:330,h:65},{g:'duct',x:880,y:335,w:520,h:65},{g:'vt',x:1205,y:212,w:95,h:110,txt:'VT/LA',tx:1305,ty:250},
+  {t:'circ',g:'bus',x:200,y:455,r:46},{t:'circ',g:'bus',x:1345,y:455,r:46},
+  {g:'cb',x:255,y:505,w:295,h:185,txt:'CB',tx:375,ty:660},{g:'cb',x:630,y:505,w:285,h:185,txt:'CB',tx:745,ty:660},{g:'cb',x:1005,y:505,w:290,h:185,txt:'CB',tx:1125,ty:660},
+  {k:'A',x:232,y:398,w:170,h:90},{k:'A',x:1148,y:398,w:165,h:90},
+  {k:'B',x:420,y:392,w:125,h:115,lb:'b'},{k:'B',x:620,y:392,w:130,h:115,lb:'b'},{k:'B',x:790,y:392,w:128,h:115,lb:'b'},{k:'B',x:995,y:392,w:125,h:115,lb:'b'},
+  {g:'bus',x:150,y:500,w:0,h:0,txt:'No.1 모선',tx:120,ty:540},{g:'bus',x:0,y:0,w:0,h:0,txt:'No.2 모선',tx:1290,ty:540},
+];
+const Hh=[
+  {g:'duct',x:1080,y:0,w:70,h:440},{g:'duct',x:1150,y:88,w:490,h:55,txt:'선로/변압기 측 인출',tx:1250,ty:75},{g:'vt',x:1075,y:-10,w:75,h:80,txt:'VT/LA',tx:965,ty:30},
+  {g:'duct',x:185,y:235,w:515,h:50},
+  {t:'circ',g:'bus',x:105,y:330,r:46},{t:'circ',g:'bus',x:1605,y:330,r:46},
+  {g:'cb',x:710,y:295,w:290,h:150,txt:'CB',tx:830,ty:430},{g:'cb',x:1235,y:295,w:285,h:150,txt:'CB',tx:1355,ty:430},
+  {g:'other',x:695,y:232,w:120,h:68},{g:'other',x:885,y:232,w:115,h:68},{g:'other',x:1238,y:232,w:100,h:68},{g:'other',x:1412,y:232,w:100,h:68},
+  {k:'D',x:55,y:192,w:132,h:105},{k:'D',x:1515,y:192,w:132,h:105},
+  {k:'B',x:995,y:195,w:95,h:130},{k:'B',x:1135,y:195,w:105,h:130},
+  {g:'bus',x:0,y:0,w:0,h:0,txt:'No.1 모선',tx:150,ty:395},{g:'bus',x:0,y:0,w:0,h:0,txt:'No.2 모선',tx:1660,ty:395},
+];
+const GL = Object.values(G).map(([c,t])=>`<span><span class="sw" style="background:${c}"></span>${t}</span>`).join('') +
+  Object.entries(T).map(([k,d])=>`<span><span class="sw" style="background:${d.c}"></span><b>${k}</b> ${d.no}</span>`).join('');
+document.getElementById('s2').innerHTML = `<h1>② 전체 GIS (05303400 LAYOUT & SECTION)에서의 위치</h1>
+<div class="sub">초록색으로 그려진 부분(NOTE 1: 50kA 증설 관련 교체 범위)이 차단기와 단로기·접지개폐기 유닛입니다. 아래에서 A~D 배지가 위 4종 도면에 해당하는 유닛입니다.</div>
+<div class="legend">${GL}</div>
+${lay('g_layC.png',1695,790,C,'SECTION C-C′ (7300 BAY)','양쪽 주모선 사이에 차단기 3대가 직렬로 놓인 구성. 각 차단기 양 끝 위에 단로기 유닛이 올라가 있습니다.')}
+${lay('g_layH.png',1943,468,Hh,'SECTION H-H′ (7800 BAY)','차단기 2대 구성. 단로기 유닛이 수평으로 누운 형태로 덕트와 일렬로 연결됩니다.')}
+<table>
+<tr><th style="width:150px">도면</th><th style="width:330px">배치도 위치</th><th>판단 근거</th><th style="width:120px">확신도</th></tr>
+<tr><td><b style="color:${T.A.c}">A</b> 1CS0600</td><td>C-C′ 양 끝, 주모선 바로 옆 (모선측 단로기)</td><td>한쪽 끝은 모선(원)에, 아래는 차단기에 붙는 L형이고, 접지개폐기 조작함이 모선 반대편 끝에 있음 → 차단기측을 접지하는 모선측 DS 형태와 일치</td><td>중간</td></tr>
+<tr><td><b style="color:${T.B.c}">B</b> 3CS02971</td><td>C-C′ 각 차단기 위 세로 유닛 · H-H′ 가운데 인출부 좌우</td><td>앞뒤(양 끝)로 관통 접속하는 직선형이고 조작함이 반대편 두 면(DS 조작부 / 접지 조작부)에 붙은 모양이 일치. H-H′에서는 접지 조작함이 아래로 매달린 모습이 단면도와 동일</td><td>높음 (H-H′) · 중간 (C-C′)</td></tr>
+<tr><td><b style="color:${T.C.c}">C</b> 3CS03213</td><td>보이는 두 단면에서는 특정 못함</td><td>접지개폐기 2개(양쪽 접지)가 필요한 위치(예: 선로측 단로기)에 쓰이는 형태. 스캔에 배치도 왼쪽 절반(7500 BAY 이전, E-E′ 단면)이 잘려 있어 그쪽에 있을 가능성</td><td>낮음</td></tr>
+<tr><td><b style="color:${T.D.c}">D</b> 3CS04525</td><td>H-H′ 양 끝, 주모선 바로 위</td><td>모선(원)이 아래에서 접속하고, 바깥쪽 끝은 덮개로 막혀 있으며, 덕트가 반대쪽 끝으로 이어지는 형태가 단면도(왼쪽 끝 막힘)와 일치. 접지개폐기는 덕트·차단기 측을 접지</td><td>중간~높음</td></tr>
+</table>
+<div class="note">※ 배치도에는 각 유닛의 도면번호가 적혀 있지 않아, 위 대응은 <b>형상(접속 방향·끝단 막힘·접지개폐기 개수와 위치)</b>을 비교해 추정한 것입니다. 확정하려면 단선결선도(SLD)나 기기 배치표의 DS/ES 번호와 대조가 필요합니다.<br>
+※ 점선 회색 박스(차단기 바로 위 짧은 유닛)는 4종 도면과 모양이 달라 CT 등 차단기 단말 부품으로 추정했습니다.</div>`;
+window.READY=true;
+</script></body></html>

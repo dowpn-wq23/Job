@@ -1,0 +1,11 @@
+import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path';
+import { chromium } from 'playwright-core';
+const ROOT = path.dirname(new URL(import.meta.url).pathname);
+const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); if (!fs.existsSync(p)) { r.writeHead(404); return r.end(); } r.end(fs.readFileSync(p)); }).listen(0);
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const pg = await b.newPage({ viewport: { width: 2400, height: 1200 } });
+await pg.goto(`http://localhost:${srv.address().port}/map.html`);
+await pg.waitForFunction(() => window.READY); await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(800);
+await (await pg.$('#s1')).screenshot({ path: 'out/map1_drawings.png' });
+await (await pg.$('#s2')).screenshot({ path: 'out/map2_gis.png' });
+await b.close(); srv.close();
