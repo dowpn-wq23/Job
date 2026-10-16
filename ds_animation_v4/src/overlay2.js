@@ -343,7 +343,7 @@ function card(t, t0, t1, lines) {
   const a = win(t, t0, t1, 0.6);
   if (a <= 0.01) return;
   octx.save(); octx.globalAlpha = a;
-  const w = 1320, h = 120 + lines.length * 50, x = (W - w) / 2, y = 150;
+  const w = 1320, h = 80 + lines.length * 50, x = (W - w) / 2, y = 150;
   rrect(x, y, w, h, 18); octx.fillStyle = 'rgba(16,24,36,0.88)'; octx.fill();
   octx.textAlign = 'center'; octx.textBaseline = 'middle';
   lines.forEach((l, i) => {
@@ -365,8 +365,8 @@ function summaryTable(t) {
   const rows = [
     ['정상', '95~105% (기준 100%)', '720° ±1° 이내', '정상 투입', '#69db7c'],
     ['유형 1  탄화물 저항', '105% 초과 (과부하)', '허용오차 ±1° 이탈', '경보 + DS 자동 강제 개방', '#ff8787'],
-    ['유형 2  구동축·연결부', '95% 미만 (무부하 공회전)', '구동축 기준각 오차', '경보 + DS 자동 강제 개방', '#ff8787'],
-    ['유형 3  리미트 S/W', '완료 후 기준 초과 전류 지속', '모터 과회전 (허용각 초과)', '경보 + 모터 DC 전원 차단', '#ff8787'],
+    ['유형 2  구동축 파손', '95% 미만 (무부하 공회전)', '구동축 기준각 오차', '경보 + DS 자동 강제 개방', '#ff8787'],
+    ['유형 3  리미트 불량', '완료 후 기준 초과 전류 지속', '모터 과회전 (허용각 초과)', '경보 + 모터 DC 전원 차단', '#ff8787'],
   ];
   rows.forEach((r, k) => {
     const yy = y + 100 + k * 62, ra = clamp((t - T.s12 - 0.8 - k * 0.6) / 0.4);
@@ -392,7 +392,7 @@ function summaryTable(t) {
     octx.font = FONT(500, 21); octx.fillStyle = '#d9e2ec'; octx.fillText(txt, cx, ry + 38);
   });
   octx.font = FONT(700, 22); octx.fillStyle = '#ffd43b';
-  octx.fillText('주기 점검(TBM) → 상태 기반 정비(CBM) 전환 · 변전소 무인화 기반', W / 2, ry + 110);
+  octx.fillText('DS 불완전 투입 사전 예방 · 원격 조작 신뢰도 확보 · 변전소 무인화 기반', W / 2, ry + 110);
   octx.restore();
 }
 
@@ -430,16 +430,14 @@ function drawOverlay(t, M) {
     octx.restore();
   }
   card(t, -1, 3.2, [
-    { t: '362kV 50kA GIS 단로기(DS)', s: 54, w: 700, c: '#fff' },
-    { t: '전동 조작 메커니즘 · 불완전 투입 감시 개발과제', s: 36, w: 700, c: '#ffc94d', dy: 12 },
-    { t: '형상 기준: 3CS02971 「단로기·접지개폐기 구조 및 동작」 (362EBH, 362DUM)', s: 20, c: '#b8c6d6', dy: 18 },
+    { t: '362kV GIS DS(단로기) 조작 메커니즘', s: 54, w: 700, c: '#fff' },
+    { t: '개발 과제 : Edge-AI 기반 DS ROLL-BACK 시스템', s: 36, w: 700, c: '#ffc94d', dy: 12 },
   ]);
   card(t, T.p2 + 0.2, T.s7 + 0.2, [
-    { t: '개발과제 · DS 불완전 투입 감시 시스템 (DS Roll-back)', s: 40, w: 700, c: '#fff' },
-    { t: '전류 · 회전각 이중 복합 진단 + Edge-AI', s: 30, w: 700, c: '#66d9e8', dy: 6 },
+    { t: '개발과제 : Edge-AI 기반 DS ROLL-BACK 시스템', s: 40, w: 700, c: '#fff' },
     { t: '⚠ 기존 SCADA는 조작함 리미트 스위치 동작만 감시 → 주접점이 체결되지 않아도 "투입 완료" 오신호', s: 22, dy: 16 },
-    { t: '최근 10년 DS 고장 18건 (연 1.8건) · 345kV GIS는 현장 즉시 조치된 잠재 사례 다수', s: 22, dy: 16 },
-    { t: '목표: 불완전 투입 사전 예방 · TBM → CBM 전환 · 변전소 무인화 기반', s: 22, dy: 16, c: '#ffd43b' },
+    { t: '→ 단순 접점 신호 한계를 넘어 모터 전류 파형 · 회전각을 AI로 분석하는 진단 신기술', s: 22, dy: 16 },
+    { t: '목표 : DS 불완전 투입 사전 예방 · 원격 조작 신뢰도 확보 · 변전소 무인화 기반', s: 22, dy: 16, c: '#ffd43b' },
   ]);
   for (const l of LABELS) label(l.a(), l.dx, l.dy, l.num, l.text, win(t, l.t0, l.t1, 0.4), l.sub, l.color);
   SUMMARY.forEach((s, k) => label(s.at(), s.dx, s.dy, String(k + 1), s.name, win(t, s.t, T.p2 - 0.3, 0.4)));
@@ -463,10 +461,10 @@ function drawOverlay(t, M) {
   for (const [a, b, text] of CAPS) {
     const al = win(t, a, b, 0.35);
     if (al <= 0.01) continue;
-    octx.save(); octx.globalAlpha = al; octx.font = FONT(700, 27);
+    octx.save(); octx.globalAlpha = al; octx.font = FONT(700, 32);
     const tw = octx.measureText(text).width;
-    rrect(W / 2 - tw / 2 - 28, 966, tw + 56, 60, 12); octx.fillStyle = 'rgba(14,22,34,0.84)'; octx.fill();
-    octx.fillStyle = '#fff'; octx.textAlign = 'center'; octx.textBaseline = 'middle'; octx.fillText(text, W / 2, 997);
+    rrect(W / 2 - tw / 2 - 32, 956, tw + 64, 70, 14); octx.fillStyle = 'rgba(14,22,34,0.84)'; octx.fill();
+    octx.fillStyle = '#fff'; octx.textAlign = 'center'; octx.textBaseline = 'middle'; octx.fillText(text, W / 2, 992);
     octx.restore();
   }
   if ((t >= T.s3 && t < T.s6) || (t >= T.s8 && t < T.s12)) {
